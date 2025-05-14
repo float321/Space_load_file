@@ -1,68 +1,30 @@
-from flask import Flask, request, url_for
+import os
+from flask import Flask, render_template, request, redirect, url_for
 
 
 app = Flask(__name__)
+pathh = 'static/img'
+
+os.makedirs(pathh, exist_ok=True)
 
 
-@app.route('/')
-@app.route('/sample_file_upload', methods=['POST', 'GET'])
-def sample_file_upload():
-    if request.method == 'GET':
-        return f'''<!doctype html>
-                        <html lang="en">
-                          <head>
-                            <meta charset="utf-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-                             <link rel="stylesheet"
-                             href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css"
-                             integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1"
-                             crossorigin="anonymous">
-                            <link rel="stylesheet" type="text/css" href="{url_for('static',filename='css/style.css')}"/>
-                            <title>Загрузка фотографии</title>
-                          </head>
-                          <body>
-                            <h1>Поучаствуем в космической миссии</h1>
-                            <form method="post" enctype="multipart/form-data" class="login_form">
-                               <div class="form-group">
-                                    <label for="photo">Приложите фотографию</label>
-                                    <input type="file" class="form-control-file" id="photo" name="file">
-                                </div>
-                                <img src="{url_for('static', filename='img/info.jpg')}"
-                                alt="">
-                                <button type="submit" class="btn btn-primary">Отправить</button>
-                            </form>
-                          </body>
-                        </html>'''
-    elif request.method == 'POST':
-        f = request.files['file']
-        with open('static/img/info.jpg', 'wb') as ff:
-            ff.write(f.read())
-        return f'''<!doctype html>
-                        <html lang="en">
-                          <head>
-                            <meta charset="utf-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-                             <link rel="stylesheet"
-                             href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css"
-                             integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1"
-                             crossorigin="anonymous">
-                            <link rel="stylesheet" type="text/css" href="{url_for('static',filename='css/style.css')}"/>
-                            <title>Загрузка фотографии</title>
-                          </head>
-                          <body>
-                            <h1>Поучаствуем в космической миссии</h1>
-                            <form method="post" enctype="multipart/form-data" class="login_form">
-                               <div class="form-group">
-                                    <label for="photo">Приложите фотографию</label>
-                                    <input type="file" class="form-control-file" id="photo" name="file">
-                                </div>
-                                <img src="{url_for('static', filename='img/info.jpg')}" 
-                                alt="">
-                                <button type="submit" class="btn btn-primary">Отправить</button>
-                            </form>
-                          </body>
-                        </html>'''
+@app.route('/', methods=['GET', 'POST'])
+def upload_photo():
+    if request.method == 'POST':
+        if 'photo' not in request.files:
+            return redirect(request.url)
+        file = request.files['photo']
+        if file.filename == '':
+            return redirect(request.url)
+        if file:
+            filename = file.filename
+            file.save(os.path.join(pathh, filename))
+            return redirect(url_for('upload_photo', filename=filename))
+
+    filename = request.args.get('filename')
+
+    return render_template('upload.html', filename=filename)
 
 
 if __name__ == '__main__':
-    app.run(port=8080, host='127.0.0.1')
+    app.run(host='127.0.0.1', port=8080)
